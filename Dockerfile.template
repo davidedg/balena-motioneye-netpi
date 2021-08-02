@@ -1,7 +1,7 @@
 FROM balenalib/%%BALENA_ARCH%%-debian:buster
 
 # Build-Variables (from .balena/balena.yml)
-ARG MOTION_DEBURL
+ARG MOTION_VERSION
 ARG MEYE_VERSION
 
 # Applications Variables
@@ -16,55 +16,55 @@ ENV TIMEZONE ${TIMEZONE}
 ENV LD_LIBRARY_PATH /opt/vc/lib
 
 
-RUN (env|sort) && \
-      install_packages \
-      curl \
-      ffmpeg \
-      git \
-	  libmariadb3 \
-      libmicrohttpd12 \
-      libpq5 \
-      lsb-release \
-	  mosquitto-clients \
-      python-jinja2 \
-      python-pil \
-      python-pip \
-	  python-pip-whl \
-      python-pycurl \
-      python-setuptools \
-      python-tornado \
-      python-wheel \
-	  python-tz \
-      v4l-utils \
-      zlib1g-dev \
-      nano \
-      libnss-mdns \
-    && \
-	(env|sort) && \
-    curl -L --output /tmp/motion.deb ${MOTION_DEBURL} && \
-    dpkg -i /tmp/motion.deb && \
-    git clone https://github.com/ccrisan/motioneye.git /tmp/motioneye && \
-    (cd /tmp/motioneye; git checkout -b build ${MEYE_VERSION}) && \
-    git clone --depth 1 https://github.com/Hexxeh/rpi-firmware.git /tmp/rpi-firmware && \
-    cp -rv /tmp/rpi-firmware/vc/hardfp/opt/vc /opt && \
-    pip install /tmp/motioneye && \
+RUN (env|sort) ; \
+	install_packages \
+	curl \
+	ffmpeg \
+	git \
+	libmariadb3 \
+	libmicrohttpd12 \
+	libpq5 \
+	lsb-release \
+	mosquitto-clients \
+	python-jinja2 \
+	python-pil \
+	python-pip \
+	python-pip-whl \
+	python-pycurl \
+	python-setuptools \
+	python-tornado \
+	python-wheel \
+	python-tz \
+	v4l-utils \
+	zlib1g-dev \
+	nano \
+	libnss-mdns \
+	&& \
+	curl -L --output /tmp/motion.deb https://github.com/Motion-Project/motion/releases/download/release-${MOTION_VERSION}/pi_stretch_motion_${MOTION_VERSION}-1_%%BALENA_ARCH%%.deb && \
+	dpkg -i /tmp/motion.deb && \
+	git clone https://github.com/ccrisan/motioneye.git /tmp/motioneye && \
+	(cd /tmp/motioneye; git checkout -b build ${MEYE_VERSION}) && \
+	if [[ "%%BALENA_MACHINE_NAME%%" == "raspberry"* ]]; then \
+		git clone --depth 1 https://github.com/Hexxeh/rpi-firmware.git /tmp/rpi-firmware && \
+		cp -rv /tmp/rpi-firmware/vc/hardfp/opt/vc /opt \
+	; fi && \
+	pip install /tmp/motioneye && \
 	mkdir -p /usr/share/motioneye/extra && \
 	cp /tmp/motioneye/extra/motioneye.conf.sample /usr/share/motioneye/extra/  && \
 	# Cleanup
-    rm /tmp/motion.deb && \
-    rm -rf /tmp/motioneye && \
-    rm -rf /tmp/rpi-firmware && \
-    apt-get purge --yes \
-      git \
-      python-pip \
-      python-setuptools \
-      python-wheel && \
-    apt-get --quiet autoremove --yes && \
-    apt-get --quiet --yes clean && rm -rf /var/lib/apt/lists/* && rm -f /var/cache/apt/*.bin && \
-    sed -i 's/.*enable-dbus=.*/enable-dbus=no/' /etc/avahi/avahi-daemon.conf
+	rm /tmp/motion.deb && \
+	rm -rf /tmp/motioneye && \
+	rm -rf /tmp/rpi-firmware && \
+	apt-get purge --yes \
+	git \
+	python-pip \
+	python-setuptools \
+	python-wheel && \
+	apt-get --quiet autoremove --yes && \
+	apt-get --quiet --yes clean && rm -rf /var/lib/apt/lists/* && rm -f /var/cache/apt/*.bin && \
+	sed -i 's/.*enable-dbus=.*/enable-dbus=no/' /etc/avahi/avahi-daemon.conf
 
 COPY start.sh ./
-
 COPY camera_actions ./usr/share/motioneye/extra/
 COPY update_camera_actions.sh ./
 
