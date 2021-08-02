@@ -1,0 +1,36 @@
+#!/bin/bash
+
+if ! command -v curl &> /dev/null
+then
+    URLFETCH="wget -O- -q"
+else
+    URLFETCH="curl"
+fi
+
+regex="^(monitor|lock|unlock|light_on|light_off|alarm_on|alarm_off|up|right|down|left|zoom_in|zoom_out|preset1|preset2|preset3|preset4|preset5|preset6|preset7|preset8|preset9)_([0-9]+)$"
+cmd=$(basename $0)
+if [[ $cmd =~ $regex ]]; then
+    camera_action="${BASH_REMATCH[1]}"
+    camera_id="${BASH_REMATCH[2]}"
+else
+    echo "Cannot parse camera action/id in '${cmd}'"
+    exit 2
+fi
+
+case "$camera_action" in
+    monitor)
+        echo $($URLFETCH http://127.0.0.1:7999/${camera_id}/detection/status 2>/dev/null | sed 's/^.* \([^ ][^ ]*\)/\1/g' ) #' # get last word -> ACTIVE or PAUSE
+        ;;
+
+    alarm_on)
+        $URLFETCH http://127.0.0.1:7999/${camera_id}/detection/start >/dev/null 2>/dev/null
+        ;;
+
+    alarm_off)
+        $URLFETCH http://127.0.0.1:7999/${camera_id}/detection/pause >/dev/null 2>/dev/null
+        ;;
+
+    *)
+        echo "Action '${camera_action}' not handled for camera id '${camera_id}'"
+        ;;
+esac
