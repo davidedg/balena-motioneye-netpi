@@ -52,7 +52,7 @@ RUN (env|sort) ; \
 		git clone --depth 1 https://github.com/Hexxeh/rpi-firmware.git /tmp/rpi-firmware && \
 		cp -rv /tmp/rpi-firmware/vc/hardfp/opt/vc /opt \
 	) || ( \
-		true
+		true \
 	) && \
 	pip install /tmp/motioneye && \
 	mkdir -p /usr/share/motioneye/extra && \
