@@ -40,18 +40,18 @@ RUN (env|sort) ; \
 	nano \
 	libnss-mdns \
 	&& \
-	if [ -z "${%%BALENA_MACHINE_NAME%%##*raspberry}" ]; then \
+	echo "%%BALENA_MACHINE_NAME%%" | grep -q "raspberry" && ( \
 		curl -L --output /tmp/motion.deb https://github.com/Motion-Project/motion/releases/download/release-${MOTION_VERSION}/pi_buster_motion_${MOTION_VERSION}-1_armhf.deb \
-	; else \
+	) || ( \
 		curl -L --output /tmp/motion.deb https://github.com/Motion-Project/motion/releases/download/release-${MOTION_VERSION}/buster_motion_${MOTION_VERSION}-1_%%BALENA_ARCH%%.deb \
-	; fi && \
+	) && \
 	dpkg -i /tmp/motion.deb && \
 	git clone https://github.com/ccrisan/motioneye.git /tmp/motioneye && \
 	(cd /tmp/motioneye; git checkout -b build ${MEYE_VERSION}) && \
-	if [ -z "${%%BALENA_MACHINE_NAME%%##*raspberry}" ]; then \
+	echo "%%BALENA_MACHINE_NAME%%" | grep -q "raspberry" && ( \
 		git clone --depth 1 https://github.com/Hexxeh/rpi-firmware.git /tmp/rpi-firmware && \
 		cp -rv /tmp/rpi-firmware/vc/hardfp/opt/vc /opt \
-	; fi && \
+	) && \
 	pip install /tmp/motioneye && \
 	mkdir -p /usr/share/motioneye/extra && \
 	cp /tmp/motioneye/extra/motioneye.conf.sample /usr/share/motioneye/extra/  && \
